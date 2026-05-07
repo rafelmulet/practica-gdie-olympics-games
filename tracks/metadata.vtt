@@ -1,0 +1,183 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:18.000
+{
+  "title":"Fútbol Femenino",
+  "desc":"Deporte de equipo donde las jugadoras buscan marcar goles en la portería contraria.",
+  "p_mas":{"n":"Estados Unidos","f":"media/images/flags/United_States.svg"},
+  "p_ori":{"n":"Inglaterra","f":"media/images/flags/United_Kingdom.svg"},
+  "tops":[
+    {"n":"Megan Rapinoe","p":"media/images/athletes/Megan_Rapinoe.jpg"},
+    {"n":"Alex Morgan","p":"media/images/athletes/Alex_Morgan.jpg"},
+    {"n":"Sam Kerr","p":"media/images/athletes/Sam_Kerr.jpg"}
+  ]
+}
+
+00:00:18.000 --> 00:00:36.000
+{
+  "title":"Gimnasia Artística Femenina",
+  "desc":"Deporte donde se realizan rutinas acrobáticas y de fuerza en aparatos como barra, suelo, viga y salto.",
+  "p_mas":{"n":"Estados Unidos","f":"media/images/flags/United_States.svg"},
+  "p_ori":{"n":"Italia","f":"media/images/flags/Italy.svg"},
+  "tops":[
+    {"n":"Simone Biles","p":"media/images/athletes/Simone_Biles.jpg"},
+    {"n":"Nadia Comăneci","p":"media/images/athletes/Nadia_Comăneci.jpg"},
+    {"n":"Larisa Latynina","p":"media/images/athletes/Larisa_Latynina.jpg"}
+  ]
+}
+
+00:00:36.000 --> 00:00:54.000
+{
+  "title":"Tenis Masculino",
+  "desc":"Deporte individual donde los jugadores golpean la pelota con raqueta intentando que el rival no la devuelva correctamente.",
+  "p_mas":{"n":"Estados Unidos","f":"media/images/flags/United_States.svg"},
+  "p_ori":{"n":"Inglaterra","f":"media/images/flags/United_Kingdom.svg"},
+  "tops":[
+    {"n":"Roger Federer","p":"media/images/athletes/Roger_Federer.jpg"},
+    {"n":"Rafael Nadal","p":"media/images/athletes/Rafael_Nadal.jpg"},
+    {"n":"Novak Djokovic","p":"media/images/athletes/Novak_Djokovic.jpg"}
+  ]
+}
+
+00:00:54.000 --> 00:01:12.000
+{
+  "title":"Natación 400m Libre Femenino",
+  "desc":"Carrera de larga distancia en piscina, estilo libre, donde gana la nadadora más rápida.",
+  "p_mas":{"n":"Estados Unidos","f":"media/images/flags/United_States.svg"},
+  "p_ori":{"n":"Egipto","f":"media/images/flags/Egypt.svg"},
+  "tops":[
+    {"n":"Katie Ledecky","p":"media/images/athletes/Katie_Ledecky.jpg"},
+    {"n":"Federica Pellegrini","p":"media/images/athletes/Federica_Pellegrini.jpg"},
+    {"n":"Shannon Vreeland","p":"media/images/athletes/Shannon_Vreeland.jpg"}
+  ]
+}
+
+00:01:12.000 --> 00:01:30.000
+{
+  "title":"Piragüismo 4 personas",
+  "desc":"Competición de equipos de cuatro en canoas o kayaks sobre aguas tranquilas o rápidas.",
+  "p_mas":{"n":"Alemania","f":"media/images/flags/Germany.svg"},
+  "p_ori":{"n":"Reino Unido","f":"media/images/flags/United_Kingdom.svg"},
+  "tops":[
+    {"n":"Fabien Lefèvre","p":"media/images/athletes/Fabien_Lefèvre.jpg"},
+    {"n":"Daniele Molmenti","p":"media/images/athletes/Daniele_Molmenti.jpg"},
+    {"n":"Michal Martikán","p":"media/images/athletes/Michal_Martikán.jpg"}
+  ]
+}
+
+00:01:30.000 --> 00:01:48.000
+{
+  "title":"Badminton Mixto",
+  "desc":"Deporte de raqueta donde se golpea un volante intentando que el rival no lo devuelva.",
+  "p_mas":{"n":"China","f":"media/images/flags/China.svg"},
+  "p_ori":{"n":"Inglaterra","f":"media/images/flags/United_Kingdom.svg"},
+  "tops":[
+    {"n":"Lin Dan","p":"media/images/athletes/Lin_Dan.jpg"},
+    {"n":"Lee Chong Wei","p":"media/images/athletes/Lee_Chong_Wei.jpg"},
+    {"n":"Taufik Hidayat","p":"media/images/athletes/Taufik_Hidayat.jpg"}
+  ]
+}
+
+00:01:48.000 --> 00:02:06.000
+{
+  "title":"Atletismo 4x400m Mixto",
+  "desc":"Relevos de 4 atletas en pista de 400m cada una, donde gana el equipo más rápido.",
+  "p_mas":{"n":"Estados Unidos","f":"media/images/flags/United_States.svg"},
+  "p_ori":{"n":"Grecia","f":"media/images/flags/Greece.svg"},
+  "tops":[
+    {"n":"Sanya Richards-Ross","p":"media/images/athletes/SanyaRichardsRossRelay.jpg"},
+    {"n":"Allyson Felix","p":"media/images/athletes/Allyson_Felix.jpg"},
+    {"n":"Christine Ohuruogu","p":"media/images/athletes/Christine_Ohuruogu.jpg"}
+  ]
+}
+
+00:02:06.000 --> 00:02:24.000
+{
+  "title":"Speed Climbing Femenino",
+  "desc":"Escalada de velocidad en muro vertical, donde gana la atleta que completa la ruta más rápido.",
+  "p_mas":{"n":"Francia","f":"media/images/flags/France.svg"},
+  "p_ori":{"n":"Suiza","f":"media/images/flags/Switzerland.svg"},
+  "tops":[
+    {"n":"Alizée Dufraisse","p":"media/images/athletes/Alizée_Dufraisse.jpg"},
+    {"n":"Anouck Jaubert","p":"media/images/athletes/Anouck_Jaubert.jpg"},
+    {"n":"Yuliya Kaplina","p":"media/images/athletes/Yuliya_Kaplina.jpg"}
+  ]
+}
+
+00:02:24.000 --> 00:02:42.000
+{
+  "title":"Vóley Playa",
+  "desc":"Deporte de equipo en arena donde dos parejas intentan pasar la pelota por encima de la red.",
+  "p_mas":{"n":"Brasil","f":"media/images/flags/Brazil.svg"},
+  "p_ori":{"n":"Estados Unidos","f":"media/images/flags/United_States.svg"},
+  "tops":[
+    {"n":"Alison Cerutti","p":"media/images/athletes/Alison_Cerutti.jpg"},
+    {"n":"Bruno Schmidt","p":"media/images/athletes/Brunor_Schmidt.jpg"},
+    {"n":"Kerri Walsh Jennings","p":"media/images/athletes/Kerri_Walsh_Jennings.jpg"}
+  ]
+}
+
+00:02:42.000 --> 00:03:00.000
+{
+  "title":"Salto Pértiga Masculino",
+  "desc":"Atletismo en el que el competidor debe saltar la mayor altura posible sobre una barra con pértiga.",
+  "p_mas":{"n":"Estados Unidos","f":"media/images/flags/United_States.svg"},
+  "p_ori":{"n":"Suecia","f":"media/images/flags/Sweden.svg"},
+  "tops":[
+    {"n":"Armand Duplantis","p":"media/images/athletes/Armand_Duplantis.jpg"},
+    {"n":"Renaud Lavillenie","p":"media/images/athletes/Renaud_Lavillenie.jpg"},
+    {"n":"Sergey Bubka","p":"media/images/athletes/Sergey_Bubka.jpg"}
+  ]
+}
+
+00:03:00.000 --> 00:03:18.000
+{
+  "title":"Jabalina Masculino",
+  "desc":"Deporte de lanzamiento donde el objetivo es alcanzar la mayor distancia posible con la jabalina.",
+  "p_mas":{"n":"Finlandia","f":"media/images/flags/Finland.svg"},
+  "p_ori":{"n":"Grecia","f":"media/images/flags/Greece.svg"},
+  "tops":[
+    {"n":"Jan Železný","p":"media/images/athletes/Jan_Zelezny.jpg"},
+    {"n":"Andreas Thorkildsen","p":"media/images/athletes/Andreas_Thorkildsen.jpg"},
+    {"n":"Tero Pitkämäki","p":"media/images/athletes/Tero_Pitkämäki.jpg"}
+  ]
+}
+
+00:03:18.000 --> 00:03:36.000
+{
+  "title":"Ciclismo en Pista ",
+  "desc":"Carreras de ciclismo en pista buscando máxima velocidad en distancias cortas.",
+  "p_mas":{"n":"Países Bajos","f":"media/images/flags/Netherlands.svg"},
+  "p_ori":{"n":"Francia","f":"media/images/flags/France.svg"},
+  "tops":[
+    {"n":"Chris Hoy","p":"media/images/athletes/Chris_Hoy.jpg"},
+    {"n":"Jason Kenny","p":"media/images/athletes/Jason_Kenny.jpg"},
+    {"n":"Leontien van Moorsel","p":"media/images/athletes/Leontien_van_Moorsel.jpg"}
+  ]
+}
+
+00:03:36.000 --> 00:03:54.000
+{
+  "title":"Básquet Femenino",
+  "desc":"Deporte de equipo donde se intenta encestar el balón en la canasta contraria.",
+  "p_mas":{"n":"Estados Unidos","f":"media/images/flags/United_States.svg"},
+  "p_ori":{"n":"Estados Unidos","f":"media/images/flags/United_States.svg"},
+  "tops":[
+    {"n":"Sue Bird","p":"media/images/athletes/Sue_Bird.jpg"},
+    {"n":"Diana Taurasi","p":"media/images/athletes/Diana_Taurasi.jpg"},
+    {"n":"Lauren Jackson","p":"media/images/athletes/Lauren_Jackson.jpg"}
+  ]
+}
+
+00:03:54.000 --> 00:04:12.000
+{
+  "title":"Ping Pong Masculino",
+  "desc":"Deporte de raqueta donde los jugadores golpean una pelota ligera buscando que no caiga en su lado.",
+  "p_mas":{"n":"China","f":"media/images/flags/China.svg"},
+  "p_ori":{"n":"Inglaterra","f":"media/images/flags/United_Kingdom.svg"},
+  "tops":[
+    {"n":"Ma Long","p":"media/images/athletes/Ma_Long.jpg"},
+    {"n":"Fan Zhendong","p":"media/images/athletes/Fan_Zhendong.jpg"},
+    {"n":"Xu Xin","p":"media/images/athletes/Xu_Xin.jpg"}
+  ]
+}

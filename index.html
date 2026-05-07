@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="icon" type="image/png" sizes="16x16" href="media/images/favicon/favicon-16.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="media/images/favicon/favicon-32.png">
+        <link rel="icon" type="image/png" sizes="64x64" href="media/images/favicon/favicon-64.png">
+
+        <title>Juegos Olímpicos</title>
+
+        <link rel="stylesheet" href="css/main.css">
+    </head>
+
+    <body>
+        <header>
+            <div class="header-content">
+                <div class="logo-container-start">
+                    <a href="https://www.olympics.com/es/" aria-label="Web Juegos Olímpicos">
+                        <img src="media/images/juegos_olimpicos.png" alt="Logo Juegos Olímpicos" class="logo-header">
+                    </a>
+                </div>
+
+                <h1>Juegos Olímpicos</h1>
+
+                <div class="logo-container-end">
+                    <a href="https://www.uib.es/" aria-label="Web UIB">
+                        <img src="media/images/uib.png" alt="Logo UIB" class="logo-header">
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main class="layout-principal">
+            <section class="columna" aria-label="Reproductor multimedia">
+                <figure id="player-container" class="player-context">
+                    <div class="video-wrapper">
+                        <video id="mainVideo" preload="auto" poster="media/images/preview.png" playsinline>
+                            <source src="media/video/video_1080p.mp4" type="video/mp4">
+                            <track src="tracks/subs_en.vtt" kind="subtitles" srclang="en" label="English">
+                            <track src="tracks/subs_es.vtt" kind="subtitles" srclang="es" label="Español">
+                            <track src="tracks/metadata.vtt" kind="metadata" srclang="es" label="Español">
+                            <track id="track-preguntas" src="tracks/quiz.vtt" kind="preguntas" srclang="es" label="Español">
+                            <p>Su navegador no soporta vídeo nativo HTML5.</p>
+                        </video>
+
+                        <audio id="mainAudio" preload="auto" playsinline>
+                            <source src="media/audio/audio_normal.aac" type="audio/aac">
+                        </audio>
+
+                        <div id="quiz-overlay" class="quiz-overlay" style="display: none;">
+                            <h3 id="quiz-question"></h3>
+                            <div id="quiz-options"></div>
+                            <p id="quiz-feedback"></p>
+                        </div>
+
+                        <div id="video-controls" class="controls-bar" data-state="hidden">
+                            <div class="controls-left">
+                                <button id="stopBtn" type="button" aria-label="Detener reproducción">
+                                    <img src="media/images/controls/stop-icon.png" alt="" class="control-icon" aria-hidden="true">
+                                </button>
+
+                                <button id="playPauseBtn" type="button" aria-label="Reproducir o pausar">
+                                    <img src="media/images/controls/play-icon.png" alt="" class="control-icon" aria-hidden="true">
+                                </button>
+
+                                <div class="volume-container">
+                                    <button id="muteBtn" type="button" aria-label="Silenciar o activar sonido">
+                                        <img src="media/images/controls/volume-down-icon.png" alt="" class="control-icon" aria-hidden="true">
+                                    </button>
+                                    <input type="range" id="volume-bar" min="0" max="1" step="0.1" value="0.5" aria-label="Control de volumen">
+                                </div>
+                            </div>
+
+                            <div class="progress-container">
+                                <input type="range" id="progress-bar" min="0" max="100" value="0" aria-label="Barra de progreso del vídeo">
+                            </div>
+
+                            <div class="controls-right">
+                                <div class="menu-container">
+                                    <div id="audio-options" class="menu-options">
+                                        <button type="button" class="opt-btn" data-audio-src="media/audio/audio_high.aac" data-icon="media/images/controls/audio-hi-icon.png">HI</button>
+                                        <button type="button" class="opt-btn active-opt" data-audio-src="media/audio/audio_normal.aac" data-icon="media/images/controls/audio-md-icon.png">MD</button>
+                                        <button type="button" class="opt-btn" data-audio-src="media/audio/audio_low.aac" data-icon="media/images/controls/audio-lo-icon.png">LO</button>
+                                        <button type="button" class="opt-btn" data-audio-src="" data-icon="media/images/controls/auto-dash-icon.png">DASH</button>
+                                        <button type="button" class="opt-btn" data-audio-src="" data-icon="media/images/controls/auto-hls-icon.png">HLS</button>
+                                    </div>
+                                    <button id="audioQualityBtn" type="button" aria-label="Calidad de Audio">
+                                        <img src="media/images/controls/audio-md-icon.png" id="audio-q-img" alt="" class="control-icon" aria-hidden="true">
+                                    </button>
+                                </div>
+
+                                <div class="menu-container">
+                                    <div id="video-options" class="menu-options">
+                                        <button type="button" class="opt-btn" data-video-src="media/video/video_2k.mp4" data-icon="media/images/controls/video-2k-icon.png">2K</button>
+                                        <button type="button" class="opt-btn" data-video-src="media/video/video_1080p.mp4" data-icon="media/images/controls/video-fhd-icon.png">1080p</button>
+                                        <button type="button" class="opt-btn active-opt" data-video-src="media/video/video_720p.mp4" data-icon="media/images/controls/video-hd-icon.png">720p</button>
+                                        <button type="button" class="opt-btn" data-video-src="media/video/video_480p.mp4" data-icon="media/images/controls/video-sd-icon.png">480p</button>
+                                        <button type="button" class="opt-btn" data-video-src="media/video/video_360p.mp4" data-icon="media/images/controls/video-sd-icon.png">360p</button>
+                                        <button type="button" class="opt-btn" data-video-src="" data-icon="media/images/controls/auto-dash-icon.png">DASH</button>
+                                        <button type="button" class="opt-btn" data-video-src="" data-icon="media/images/controls/auto-hls-icon.png">HLS</button>
+                                    </div>
+                                    <button id="qualityBtn" type="button" aria-label="Ajustes de calidad de vídeo">
+                                        <img src="media/images/controls/video-hd-icon.png" id="video-q-img" alt="" class="control-icon" aria-hidden="true">
+                                    </button>
+                                </div>
+
+                                <div class="menu-container">
+                                    <div id="subtitles-options" class="menu-options">
+                                        <button type="button" class="opt-btn" data-lang="en" aria-label="Subtítulos en inglés">EN</button>
+                                        <button type="button" class="opt-btn" data-lang="es" aria-label="Subtítulos en español">ES</button>
+                                    </div>
+                                    <button id="subtitlesBtn" type="button" aria-label="Activar o desactivar subtítulos">
+                                        <img src="media/images/controls/subtitles-off-icon.png" id="subtitles-img" alt="" class="control-icon" aria-hidden="true">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </figure>
+
+                <div class="info-bajo-video">
+                    <h2>Nombre del Deporte</h2>
+                    <p>Datos generales del vídeo.</p>
+                </div>
+            </section>
+
+            <section class="columna" aria-label="Información adicional">
+                <div class="grupo-bloques">
+                    <article class="bloque">
+                        <h3>País Más Practicado</h3>
+                        <img id="meta-mas-jugado-img" src="media/images/flags/init_flag.jpg" alt="">
+                        <p id="meta-mas-jugado-p">---</p>
+                    </article>
+
+                    <article class="bloque">
+                        <h3>País de Origen</h3>
+                        <img id="meta-origen-img" src="media/images/flags/init_flag.jpg" alt="">
+                        <p id="meta-origen-p">---</p>
+                    </article>
+                </div>
+
+                <div class="grupo-bloques">
+                    <article class="bloque">
+                        <h3>Top 1</h3>
+                        <img id="meta-top1-img" src="media/images/athletes/init_athlete.jpg" alt="">
+                        <p id="meta-top1-p">---</p>
+                    </article>
+
+                    <article class="bloque">
+                        <h3>Top 2</h3>
+                        <img id="meta-top2-img" src="media/images/athletes/init_athlete.jpg" alt="">
+                        <p id="meta-top2-p">---</p>
+                    </article>
+
+                    <article class="bloque">
+                        <h3>Top 3</h3>
+                        <img id="meta-top3-img" src="media/images/athletes/init_athlete.jpg" alt="">
+                        <p id="meta-top3-p">---</p>
+                    </article>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Gestió i Distribució de la Informació Empresarial</p>
+            <p>Rafel Mulet Serna y Juana María Luna Carvajal</p>
+        </footer>
+
+        <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+        <script src="js/main.js"></script>
+    </body>
+</html>

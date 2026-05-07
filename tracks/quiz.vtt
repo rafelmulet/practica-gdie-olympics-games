@@ -1,0 +1,99 @@
+WEBVTT
+
+00:00:15.000 --> 00:00:15.500
+{
+  "question": "¿Qué selección femenina de fútbol viste de blanco y rojo en este encuentro contra Brasil?",
+  "options": ["Corea del Sur", "Japón", "China", "Canadá"],
+  "correctIndex": 1
+}
+
+00:00:34.000 --> 00:00:34.500
+{
+  "question": "¿En qué aparato de gimnasia artística está compitiendo Simone Biles?",
+  "options": ["Barras asimétricas", "Suelo", "Salto de potro", "Barra de equilibrio"],
+  "correctIndex": 2
+}
+
+00:00:52.000 --> 00:00:52.500
+{
+  "question": "¿Quiénes son los protagonistas de este legendario enfrentamiento en tenis masculino?",
+  "options": ["Alcaraz vs Sinner", "Djokovic vs Nadal", "Federer vs Murray", "Zverev vs Medvedev"],
+  "correctIndex": 1
+}
+
+00:01:10.000 --> 00:01:10.500
+{
+  "question": "¿Qué nadadora lidera la prueba de 400m estilos para Canadá?",
+  "options": ["Summer McIntosh", "Katie Ledecky", "Ariarne Titmus", "Regan Smith"],
+  "correctIndex": 0
+}
+
+00:01:28.000 --> 00:01:28.500
+{
+  "question": "¿Qué país se lleva la medalla de oro en esta final A de remo?",
+  "options": ["Gran Bretaña", "Nueva Zelanda", "Países Bajos", "Alemania"],
+  "correctIndex": 2
+}
+
+00:01:46.000 --> 00:01:46.500
+{
+  "question": "¿Qué modalidad de bádminton se está disputando por la medalla de bronce?",
+  "options": ["Individual masculino", "Dobles femenino", "Individual femenino", "Dobles mixto"],
+  "correctIndex": 3
+}
+
+00:02:04.000 --> 00:02:04.500
+{
+  "question": "¿Qué atleta realiza la última posta para darle la victoria a Países Bajos en el 4x400m mixto?",
+  "options": ["Lieke Klaver", "Femke Bol", "Sifan Hassan", "Gabby Thomas"],
+  "correctIndex": 1
+}
+
+00:02:22.000 --> 00:02:22.500
+{
+  "question": "¿Qué récord olímpico bate la polaca Aleksandra Mirosław en esta prueba de escalada de velocidad?",
+  "options": ["6.06 segundos", "6.24 segundos", "5.94 segundos", "6.12 segundos"],
+  "correctIndex": 0
+}
+
+00:02:40.000 --> 00:02:40.500
+{
+  "question": "¿Cuál es el escenario icónico que se ve de fondo en la sede de voley playa?",
+  "options": ["El Museo del Louvre", "La Catedral de Notre Dame", "La Torre Eiffel", "El Arco del Triunfo"],
+  "correctIndex": 2
+}
+
+00:02:58.000 --> 00:03:00.000
+{
+  "question": "¿Qué altura intenta superar Armand Duplantis para romper el récord mundial de salto con pértiga?",
+  "options": ["6.10 metros", "6.25 metros", "6.00 metros", "6.20 metros"],
+  "correctIndex": 1
+}
+
+00:03:12.000 --> 00:03:12.500
+{
+  "question": "¿Qué país representa Arshad Nadeem, quien logró un lanzamiento histórico en jabalina?",
+  "options": ["India", "Pakistán", "Egipto", "Irán"],
+  "correctIndex": 1
+}
+
+00:03:28.000 --> 00:03:28.500
+{
+  "question": "¿Qué ciclista neerlandés vence a Matthew Richardson en la final de velocidad en pista?",
+  "options": ["Harrie Lavreysen", "Jeffrey Hoogland", "Chris Hoy", "Jason Kenny"],
+  "correctIndex": 0
+}
+
+00:03:51.000 --> 00:03:51.500
+{
+  "question": "¿Qué selección femenina de baloncesto se lleva el oro tras un final agónico contra Francia?",
+  "options": ["España", "China", "Estados Unidos", "Australia"],
+  "correctIndex": 2
+}
+
+00:04:10.000 --> 00:04:10.500
+{
+  "question": "¿Quién es el jugador chino que se enfrenta al sueco Truls Möregårdh en la final de tenis de mesa?",
+  "options": ["Ma Long", "Fan Zhendong", "Wang Chuqin", "Liang Jingkun"],
+  "correctIndex": 1
+}
