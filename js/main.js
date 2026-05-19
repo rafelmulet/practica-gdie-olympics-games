@@ -29,14 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const audioOptions = document.querySelectorAll('.opt-btn[data-audio-src]');
 
     // ==========================================
-    // --- VARIABLES DASH / HLS --- 
+    // --- VARIABLES DASH --- 
     // ==========================================
     let dashPlayer = null;
     let isDashActive = false;
-    let hlsPlayer = null;
-    let isHlsActive = false;
     const DASH_MANIFEST_URL = 'media/dash/manifest.mpd';
-    const HLS_MANIFEST_URL  = 'media/hls/master.m3u8';
 
     // ==========================================
     // --- 2. CONFIGURACIÓN INICIAL --- 
@@ -47,63 +44,43 @@ document.addEventListener('DOMContentLoaded', () => {
     video.muted = true;
     audio.volume = 0.5;
 
-    // Asegurar que JS reconozca los src de los tag <source> iniciales
-    if (!video.src || video.src === window.location.href) {
-        const sourceEl = video.querySelector('source');
-        if (sourceEl) video.src = sourceEl.src;
-    }
-    if (!audio.src || audio.src === window.location.href) {
-        const sourceEl = audio.querySelector('source');
-        if (sourceEl) audio.src = sourceEl.src;
-    }
+    // Asegurar que js reconozca los src de los tag <source> iniciales
+    if (!video.src) video.src = video.querySelector('source').src;
+    if (!audio.src) audio.src = audio.querySelector('source').src;
 
     // ==========================================
     // --- LÓGICA MPEG-DASH ---
     // ==========================================
     function activarDash() {
         if (isDashActive) return;
+        isDashActive = true;
 
         const currentTime = video.currentTime;
         const wasPlaying = !video.paused;
 
+        // Pausar los elementos nativos independientes
         video.pause();
         audio.pause();
 
-        isDashActive = true;
-
+        // Inicializar Dash.js en el elemento de video principal
         dashPlayer = dashjs.MediaPlayer().create();
+        
+        // Activar AutoSwitching (ABR) para cambiar entre las calidades
         dashPlayer.updateSettings({
             streaming: {
                 abr: { autoSwitchBitrate: { video: true, audio: true } }
             }
         });
 
-        // FIX: Wait for STREAM_INITIALIZED before seeking, otherwise seek is ignored
-        dashPlayer.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, function onInit() {
-            dashPlayer.off(dashjs.MediaPlayer.events.STREAM_INITIALIZED, onInit);
-            if (currentTime > 0) dashPlayer.seek(currentTime);
-            if (wasPlaying) {
-                video.play()
-                    .then(() => { playPauseImg.src = 'media/images/controls/pause-icon.png'; })
-                    .catch(e => console.log("DASH play interceptado:", e));
-            }
-            // Re-enable play button after DASH is ready
-            playPauseBtn.disabled = false;
-            playPauseBtn.style.opacity = '1';
-        });
+        dashPlayer.initialize(video, DASH_MANIFEST_URL, wasPlaying);
+        dashPlayer.seek(currentTime);
 
-        dashPlayer.initialize(video, DASH_MANIFEST_URL, false);
-
-        // Sync volumes from the audio element to the video element (DASH uses video for audio)
+        // Ajustar volúmenes: DASH reproducirá el audio a través del <video>
         video.volume = audio.volume;
         video.muted = audio.muted;
-
-        // Silence the native audio element so MP4 audio doesn't overlap
+        
+        // Silenciamos el <audio> nativo para que no suene el MP4 por detrás
         audio.muted = true;
-
-        // Disable play button while DASH initialises
-        playPauseBtn.disabled = true;
-        playPauseBtn.style.opacity = '0.5';
     }
 
     function desactivarDash() {
@@ -115,86 +92,18 @@ document.addEventListener('DOMContentLoaded', () => {
             dashPlayer = null;
         }
 
-        // FIX: Restore audio.muted based on a tracked boolean, not a fragile src comparison
-        audio.muted = isMuted;
-    }
-
-    // ==========================================
-    // --- LÓGICA HLS ---
-    // ==========================================
-    function activarHls() {
-        if (isHlsActive) return;
-
-        const currentTime = video.currentTime;
-        const wasPlaying = !video.paused;
-
-        video.pause();
-        audio.pause();
-
-        isHlsActive = true;
-
-        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-            hlsPlayer = new Hls();
-            hlsPlayer.loadSource(HLS_MANIFEST_URL);
-            hlsPlayer.attachMedia(video);
-
-            hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
-                if (currentTime > 0) video.currentTime = currentTime;
-                video.volume = audio.volume;
-                video.muted = audio.muted;
-                audio.muted = true;
-
-                if (wasPlaying) {
-                    video.play()
-                        .then(() => { playPauseImg.src = 'media/images/controls/pause-icon.png'; })
-                        .catch(e => console.log("HLS play interceptado:", e));
-                }
-                playPauseBtn.disabled = false;
-                playPauseBtn.style.opacity = '1';
-            });
-
-            playPauseBtn.disabled = true;
-            playPauseBtn.style.opacity = '0.5';
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Native HLS (Safari)
-            video.src = HLS_MANIFEST_URL;
-            video.currentTime = currentTime;
-            if (wasPlaying) video.play().catch(e => console.log(e));
-        } else {
-            console.error('HLS no soportado en este navegador.');
-            isHlsActive = false;
-        }
-    }
-
-    function desactivarHls() {
-        if (!isHlsActive) return;
-        isHlsActive = false;
-
-        if (hlsPlayer) {
-            hlsPlayer.destroy();
-            hlsPlayer = null;
-        }
-
-        audio.muted = isMuted;
-    }
-
-    function desactivarStreaming() {
-        if (isDashActive) desactivarDash();
-        if (isHlsActive) desactivarHls();
+        // Restaurar el mute nativo del audio según la interfaz gráfica
+        audio.muted = muteBtn.querySelector('img').src.includes('volume-mute');
     }
 
     // ==========================================
     // --- 3. FUNCIÓN DE CARGA ROBUSTA --- 
     // ==========================================
-
-    // FIX: Track mute state explicitly (not via src string inspection)
-    let isMuted = false;
-
     window.waitForMediaLoad = function(resumePlay = false, restoreTime = 0) {
         let isVideoReady = false;
-        // FIX: When DASH/HLS is active, we don't wait for the native audio element
-        let isAudioReady = isDashActive || isHlsActive;
+        let isAudioReady = false;
 
+        // Deshabilita el botón de play mientras carga el buffer
         playPauseBtn.disabled = true;
         playPauseBtn.style.opacity = '0.5';
 
@@ -204,14 +113,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 playPauseBtn.style.opacity = '1';
 
                 if (resumePlay) {
-                    if (isDashActive || isHlsActive) {
-                        video.play()
-                            .then(() => { playPauseImg.src = 'media/images/controls/pause-icon.png'; })
-                            .catch(e => console.log(e));
+                    if (isDashActive) {
+                        video.play().then(() => playPauseImg.src = 'media/images/controls/pause-icon.png').catch(e => console.log(e));
                     } else {
-                        Promise.all([video.play(), audio.play()])
-                            .then(() => { playPauseImg.src = 'media/images/controls/pause-icon.png'; })
-                            .catch(e => console.log("Auto-play interceptado:", e));
+                        Promise.all([video.play(), audio.play()]).then(() => {
+                            playPauseImg.src = 'media/images/controls/pause-icon.png';
+                        }).catch(e => console.log("Auto-play interceptado:", e));
                     }
                 }
             }
@@ -219,50 +126,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const handleMediaError = (type) => {
             console.error(`Error: El ${type} no pudo cargarse o hubo un problema de red.`);
-            playPauseBtn.disabled = false;
-            playPauseBtn.style.opacity = '1';
         };
 
+        // Restaurar tiempo (cambio de calidad)
         if (restoreTime > 0) {
             video.addEventListener('loadedmetadata', () => { video.currentTime = restoreTime; }, { once: true });
-            if (!isDashActive && !isHlsActive) {
-                audio.addEventListener('loadedmetadata', () => { audio.currentTime = restoreTime; }, { once: true });
-            }
+            audio.addEventListener('loadedmetadata', () => { audio.currentTime = restoreTime; }, { once: true });
         }
 
+        // Listeners para la carga del buffer
         video.addEventListener('canplaythrough', () => {
             isVideoReady = true;
             checkReadyState();
         }, { once: true });
         video.addEventListener('error', () => handleMediaError('Video'), { once: true });
 
-        // FIX: Only register audio listeners when not in streaming mode
-        if (!isDashActive && !isHlsActive) {
-            audio.addEventListener('canplaythrough', () => {
-                isAudioReady = true;
-                checkReadyState();
-            }, { once: true });
-            audio.addEventListener('error', () => handleMediaError('Audio'), { once: true });
-        }
+        audio.addEventListener('canplaythrough', () => {
+            isAudioReady = true;
+            checkReadyState();
+        }, { once: true });
+        audio.addEventListener('error', () => handleMediaError('Audio'), { once: true });
 
+        // Forzar la carga
         video.load();
-        if (!isDashActive && !isHlsActive) audio.load();
+        audio.load();
     };
 
+    // Activar la espera inicial al cargar la página por primera vez
     window.waitForMediaLoad();
 
     // ==========================================
     // --- 4. SINCRONIZACIÓN PERFECTA --- 
     // ==========================================
     const syncMedia = () => {
-        if (!isDashActive && !isHlsActive && Math.abs(video.currentTime - audio.currentTime) > 0.15) {
+        if (!isDashActive && Math.abs(video.currentTime - audio.currentTime) > 0.15) {
             audio.currentTime = video.currentTime;
         }
     };
 
     const checkStreamingSync = (label) => {
-        if (label === 'DASH' || label === 'HLS') {
-            // Mark all buttons with this label as active
+        if (label === 'DASH') {
             const allBtns = document.querySelectorAll('.opt-btn');
             allBtns.forEach(btn => {
                 if (btn.textContent.trim() === label) {
@@ -274,27 +177,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (parent.id === 'audio-options') audioQImg.src = btn.dataset.icon;
                 }
             });
-
-            console.log(`Modo ${label} activado.`);
-
-            if (label === 'DASH') {
-                desactivarHls();
-                activarDash();
-            } else {
-                desactivarDash();
-                activarHls();
-            }
+            console.log(`Modo ${label} activado. ABR Gestionando calidades.`);
+            activarDash();
             return true;
         }
         return false;
     };
 
-    video.addEventListener('seeking', () => { if (!isDashActive && !isHlsActive) audio.currentTime = video.currentTime; });
-    video.addEventListener('waiting', () => { if (!isDashActive && !isHlsActive) audio.pause(); });
+    video.addEventListener('seeking', () => { if (!isDashActive) audio.currentTime = video.currentTime; });
+    video.addEventListener('waiting', () => { if (!isDashActive) audio.pause(); });
     video.addEventListener('timeupdate', syncMedia);
     video.addEventListener('playing', () => {
         syncMedia();
-        if (!video.paused && !isDashActive && !isHlsActive) {
+        if (!video.paused && !isDashActive) {
             audio.play().catch(e => console.log("Audio play interceptado", e));
         }
     });
@@ -314,19 +209,20 @@ document.addEventListener('DOMContentLoaded', () => {
             audioQuality.classList.add('active-opt');
             audioQImg.src = audioQuality.dataset.icon;
             audio.src = audioQuality.dataset.audioSrc;
+            console.log("Audio forzado");
         }
     }
 
     videoOptions.forEach(btn => {
         btn.addEventListener('click', (e) => {
             const label = e.target.textContent.trim();
-            if (label === 'DASH' || label === 'HLS') {
+            if (label === 'DASH') {
                 checkStreamingSync(label);
                 return;
             }
             if (e.target.classList.contains('active-opt')) return;
 
-            desactivarStreaming();
+            if (isDashActive) desactivarDash();
 
             const comingFromSync = wasInSyncMode();
             const newSrc = e.target.dataset.videoSrc;
@@ -352,19 +248,20 @@ document.addEventListener('DOMContentLoaded', () => {
             videoQuality.classList.add('active-opt');
             videoQImg.src = videoQuality.dataset.icon;
             video.src = videoQuality.dataset.videoSrc;
+            console.log("Video forzado");
         }
     }
 
     audioOptions.forEach(btn => {
         btn.addEventListener('click', (e) => {
             const label = e.target.textContent.trim();
-            if (label === 'DASH' || label === 'HLS') {
+            if (label === 'DASH') {
                 checkStreamingSync(label);
                 return;
             }
             if (e.target.classList.contains('active-opt')) return;
 
-            desactivarStreaming();
+            if (isDashActive) desactivarDash();
 
             const comingFromSync = wasInSyncMode();
             const newSrc = e.target.dataset.audioSrc;
@@ -374,7 +271,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             audioOptions.forEach(b => b.classList.remove('active-opt'));
             e.target.classList.add('active-opt');
-            audioQImg.src = newIcon;
+            audioQImg.src = newIcon; 
+            
             audio.src = newSrc;
 
             if (comingFromSync) setVideoQuality('720p');
@@ -387,11 +285,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 6. LÓGICA DE REPRODUCCIÓN Y VOLUMEN ---
     // ==========================================
     function actualizarIconoVolumen() {
-        if (isMuted) {
+        if (audio.muted && (!isDashActive || video.muted)) {
             volumeImg.src = 'media/images/controls/volume-mute-icon.png';
             volumeBar.style.background = `rgba(255, 255, 255, 0.3)`;
         } else {
-            const currentVolume = (isDashActive || isHlsActive) ? video.volume : audio.volume;
+            const currentVolume = isDashActive ? video.volume : audio.volume;
             if (currentVolume < 0.4) {
                 volumeImg.src = 'media/images/controls/volume-icon.png';
             } else if (currentVolume < 0.8) {
@@ -399,13 +297,14 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 volumeImg.src = 'media/images/controls/volume-up-icon.png';
             }
+
             const porcentaje = currentVolume * 100;
             volumeBar.style.background = `linear-gradient(to right, #0505A1 ${porcentaje}%, rgba(255, 255, 255, 0.3) ${porcentaje}%)`;
         }
     }
 
     stopBtn.addEventListener('click', () => {
-        desactivarStreaming();
+        if (isDashActive) desactivarDash();
 
         video.pause();
         audio.pause();
@@ -413,14 +312,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         audio.volume = 0.5;
         volumeBar.value = 0.5;
-        isMuted = false;
         audio.muted = false;
-        video.muted = false;
         actualizarIconoVolumen();
 
         video.currentTime = 0;
         audio.currentTime = 0;
-
+     
         progressBar.value = 0;
         progressBar.style.background = `rgba(255, 255, 255, 0.3)`;
 
@@ -436,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
     playPauseBtn.addEventListener('click', async () => {
         if (video.paused || video.ended) {
             try {
-                if (isDashActive || isHlsActive) {
+                if (isDashActive) {
                     await video.play();
                 } else {
                     audio.currentTime = video.currentTime;
@@ -447,10 +344,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Error en reproducción:", error);
             }
         } else {
-            // FIX: video.pause() and audio.pause() are synchronous — no await needed
-            video.pause();
-            if (!isDashActive && !isHlsActive) {
-                audio.pause();
+            if (isDashActive) {
+                video.pause();
+            } else {
+                await Promise.all([video.pause(), audio.pause()]);
                 audio.currentTime = video.currentTime;
             }
             playPauseImg.src = 'media/images/controls/play-icon.png';
@@ -458,17 +355,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     volumeBar.addEventListener('input', () => {
-        const vol = parseFloat(volumeBar.value);
-        audio.volume = vol;
-        if (isDashActive || isHlsActive) video.volume = vol;
+        audio.volume = volumeBar.value;
+        if (isDashActive) video.volume = volumeBar.value;
         actualizarIconoVolumen();
     });
 
     muteBtn.addEventListener('click', () => {
-        isMuted = !isMuted;
-        audio.muted = isMuted;
-        if (isDashActive || isHlsActive) video.muted = isMuted;
-        if (!isMuted) {
+        audio.muted = !audio.muted;
+        if (isDashActive) video.muted = audio.muted;
+        if (!audio.muted) {
             volumeBar.value = audio.volume;
         }
         actualizarIconoVolumen();
@@ -489,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     progressBar.addEventListener('input', () => {
         const tiempoDestino = (progressBar.value / 100) * video.duration;
-        video.currentTime = tiempoDestino;
+        video.currentTime = tiempoDestino; 
     });
 
     video.addEventListener('ended', () => {
@@ -504,9 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const hideAllTracks = () => {
         for (let i = 0; i < video.textTracks.length; i++) {
-            if (video.textTracks[i].kind === 'subtitles' || video.textTracks[i].kind === 'captions') {
-                video.textTracks[i].mode = 'hidden';
-            }
+            video.textTracks[i].mode = 'hidden';
         }
         isSubtitlesActive = false;
         subtitlesImg.src = 'media/images/controls/subtitles-off-icon.png';
@@ -516,8 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const showTrack = (lang) => {
         hideAllTracks();
         for (let i = 0; i < video.textTracks.length; i++) {
-            if (video.textTracks[i].language === lang &&
-                (video.textTracks[i].kind === 'subtitles' || video.textTracks[i].kind === 'captions')) {
+            if (video.textTracks[i].language === lang) {
                 video.textTracks[i].mode = 'showing';
                 isSubtitlesActive = true;
                 currentLang = lang;
@@ -568,15 +460,14 @@ document.addEventListener('DOMContentLoaded', () => {
             video.pause();
             audio.pause();
         } else {
-            if (!isDashActive && !isHlsActive) audio.currentTime = video.currentTime;
+            audio.currentTime = video.currentTime;
             if (wasPlayingBeforeHidden) {
                 try {
-                    if (isDashActive || isHlsActive) {
+                    if (isDashActive) {
                         await video.play();
                     } else {
                         await Promise.all([video.play(), audio.play()]);
                     }
-                    playPauseImg.src = 'media/images/controls/pause-icon.png';
                 } catch (e) {
                     console.log("Reanudación bloqueada por el navegador");
                 }
@@ -587,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // --- 10. LÓGICA DE METADATOS (WEBVTT) ---
     // ==========================================
-    const metadataTrack = Array.from(video.textTracks).find(t => t.kind === 'metadata' && t.label === 'Español');
+    const metadataTrack = Array.from(video.textTracks).find(t => t.kind === 'metadata');
 
     if (metadataTrack) {
         metadataTrack.mode = 'hidden';
@@ -634,43 +525,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const quizOptionsContainer = document.getElementById('quiz-options');
     const quizFeedback = document.getElementById('quiz-feedback');
 
-    // FIX: kind="preguntas" is not a valid HTML track kind — browsers silently ignore it.
-    // Changed to kind="metadata" with label="Quiz" in the HTML, and matched here.
-    const quizTrackEl = Array.from(video.textTracks).find(
-        t => t.kind === 'metadata' && t.label === 'Quiz'
-    );
+    const trackElementPreguntas = document.getElementById('track-preguntas');
 
-    if (quizTrackEl) {
-        quizTrackEl.mode = 'hidden';
+    if (trackElementPreguntas) {
+        const preguntasTrack = trackElementPreguntas.track;
+        preguntasTrack.mode = 'hidden';
 
-        quizTrackEl.addEventListener('cuechange', () => {
-            const cue = quizTrackEl.activeCues[0];
+        preguntasTrack.addEventListener('cuechange', () => {
+            const cue = preguntasTrack.activeCues[0];
             if (!cue) return;
 
             try {
                 const quizData = JSON.parse(cue.text);
 
+                // 1. Pausar la reproducción
                 video.pause();
-                if (!isDashActive && !isHlsActive) audio.pause();
+                if (!isDashActive) audio.pause();
                 playPauseImg.src = 'media/images/controls/play-icon.png';
-
+                
+                // NUEVO: Bloquear los controles mientras se muestra el quiz
                 controls.classList.add('controls-disabled');
 
+                // 2. Preparar la interfaz del quiz
                 quizQuestion.textContent = quizData.question;
-                quizOptionsContainer.innerHTML = '';
+                quizOptionsContainer.innerHTML = ''; 
                 quizFeedback.textContent = '';
+                
+                quizOverlay.style.display = 'flex'; // Mostrar overlay
 
-                quizOverlay.style.display = 'flex';
-
+                // 3. Generar los botones dinámicamente
                 quizData.options.forEach((opcion, index) => {
                     const btn = document.createElement('button');
                     btn.className = 'quiz-option';
                     btn.textContent = opcion;
 
                     btn.addEventListener('click', () => {
+                        // Deshabilitar todos los botones una vez respondido
                         const todosBotones = quizOptionsContainer.querySelectorAll('.quiz-option');
                         todosBotones.forEach(b => b.disabled = true);
 
+                        // Comprobar si acertó
                         if (index === quizData.correctIndex) {
                             btn.classList.add('correct');
                             quizFeedback.textContent = '¡Correcto!';
@@ -679,17 +573,22 @@ document.addEventListener('DOMContentLoaded', () => {
                             btn.classList.add('incorrect');
                             quizFeedback.textContent = 'Respuesta incorrecta.';
                             quizFeedback.style.color = '#dc3545';
+                            // Resaltar también cuál era la verdadera
                             todosBotones[quizData.correctIndex].classList.add('correct');
                         }
 
+                        // 4. Reanudar el vídeo tras 2 segundos exactos
                         setTimeout(async () => {
                             quizOverlay.style.display = 'none';
+                            
+                            // NUEVO: Desbloquear los controles
                             controls.classList.remove('controls-disabled');
-
-                            if (!isDashActive && !isHlsActive) audio.currentTime = video.currentTime;
-
+                            
+                            // Aseguramos la sincronización antes de darle al play
+                            if (!isDashActive) audio.currentTime = video.currentTime; 
+                            
                             try {
-                                if (isDashActive || isHlsActive) {
+                                if (isDashActive) {
                                     await video.play();
                                 } else {
                                     await Promise.all([video.play(), audio.play()]);

@@ -3,13 +3,79 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ==========================================
+    // --- 0. WEBRTC Y SEÑALIZACIÓN --- 
+    // ==========================================
+    const socket = io();
+    const room = 'sala-quiz';
+    let peerConnection;
+    let dataChannel;
+
+    socket.emit('join', room);
+
+    socket.on('ready', () => {
+        console.log('Respondedor conectado. Iniciando conexión WebRTC...');
+        crearPeerConnection();
+    });
+
+    socket.on('message', async (message) => {
+        if (!peerConnection) crearPeerConnection();
+
+        if (message.type === 'answer') {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(message));
+        } else if (message.type === 'candidate') {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
+        }
+    });
+
+    function crearPeerConnection() {
+        if (peerConnection) return;
+        peerConnection = new RTCPeerConnection({
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        });
+
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit('message', { room, message: { type: 'candidate', candidate: event.candidate } });
+            }
+        };
+
+        // Creamos el DataChannel en el cliente que inicia (Visualizador)
+        dataChannel = peerConnection.createDataChannel('quizChannel');
+        dataChannel.onopen = () => console.log('DataChannel abierto en el Visualizador.');
+        
+        dataChannel.onmessage = async (event) => {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'RESUME_VIDEO') {
+                controls.classList.remove('controls-disabled');
+                
+                if (!isDashActive && !isHlsActive) audio.currentTime = video.currentTime;
+
+                try {
+                    if (isDashActive || isHlsActive) {
+                        await video.play();
+                    } else {
+                        await Promise.all([video.play(), audio.play()]);
+                    }
+                    playPauseImg.src = 'media/images/controls/pause-icon.png';
+                } catch (e) {
+                    console.log("Error al reanudar tras la orden del respondedor:", e);
+                }
+            }
+        };
+
+        peerConnection.createOffer()
+            .then(offer => peerConnection.setLocalDescription(offer))
+            .then(() => socket.emit('message', { room, message: peerConnection.localDescription }))
+            .catch(e => console.error("Error WebRTC:", e));
+    }
+
+    // ==========================================
     // --- 1. SELECCIÓN DE ELEMENTOS --- 
     // ==========================================
     const video = document.getElementById('mainVideo');
     const audio = document.getElementById('mainAudio');
     const controls = document.getElementById('video-controls');
 
-    // Controles básicos
     const stopBtn = document.getElementById('stopBtn');
     const playPauseBtn = document.getElementById('playPauseBtn');
     const playPauseImg = playPauseBtn.querySelector('img');
@@ -18,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const volumeImg = muteBtn.querySelector('img');
     const progressBar = document.getElementById('progress-bar');
 
-    // Controles de subtítulos y calidad
     const subtitlesBtn = document.getElementById('subtitlesBtn');
     const subtitlesImg = document.getElementById('subtitles-img');
     const videoQImg = document.getElementById('video-q-img');
@@ -47,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
     video.muted = true;
     audio.volume = 0.5;
 
-    // Asegurar que JS reconozca los src de los tag <source> iniciales
     if (!video.src || video.src === window.location.href) {
         const sourceEl = video.querySelector('source');
         if (sourceEl) video.src = sourceEl.src;
@@ -78,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // FIX: Wait for STREAM_INITIALIZED before seeking, otherwise seek is ignored
         dashPlayer.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, function onInit() {
             dashPlayer.off(dashjs.MediaPlayer.events.STREAM_INITIALIZED, onInit);
             if (currentTime > 0) dashPlayer.seek(currentTime);
@@ -87,21 +150,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     .then(() => { playPauseImg.src = 'media/images/controls/pause-icon.png'; })
                     .catch(e => console.log("DASH play interceptado:", e));
             }
-            // Re-enable play button after DASH is ready
             playPauseBtn.disabled = false;
             playPauseBtn.style.opacity = '1';
         });
 
         dashPlayer.initialize(video, DASH_MANIFEST_URL, false);
-
-        // Sync volumes from the audio element to the video element (DASH uses video for audio)
         video.volume = audio.volume;
         video.muted = audio.muted;
-
-        // Silence the native audio element so MP4 audio doesn't overlap
         audio.muted = true;
 
-        // Disable play button while DASH initialises
         playPauseBtn.disabled = true;
         playPauseBtn.style.opacity = '0.5';
     }
@@ -114,8 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
             dashPlayer.reset();
             dashPlayer = null;
         }
-
-        // FIX: Restore audio.muted based on a tracked boolean, not a fragile src comparison
         audio.muted = isMuted;
     }
 
@@ -156,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
             playPauseBtn.disabled = true;
             playPauseBtn.style.opacity = '0.5';
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Native HLS (Safari)
             video.src = HLS_MANIFEST_URL;
             video.currentTime = currentTime;
             if (wasPlaying) video.play().catch(e => console.log(e));
@@ -174,7 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
             hlsPlayer.destroy();
             hlsPlayer = null;
         }
-
         audio.muted = isMuted;
     }
 
@@ -186,13 +239,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // --- 3. FUNCIÓN DE CARGA ROBUSTA --- 
     // ==========================================
-
-    // FIX: Track mute state explicitly (not via src string inspection)
     let isMuted = false;
 
     window.waitForMediaLoad = function(resumePlay = false, restoreTime = 0) {
         let isVideoReady = false;
-        // FIX: When DASH/HLS is active, we don't wait for the native audio element
         let isAudioReady = isDashActive || isHlsActive;
 
         playPauseBtn.disabled = true;
@@ -218,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const handleMediaError = (type) => {
-            console.error(`Error: El ${type} no pudo cargarse o hubo un problema de red.`);
+            console.error(`Error: El ${type} no pudo cargarse.`);
             playPauseBtn.disabled = false;
             playPauseBtn.style.opacity = '1';
         };
@@ -236,7 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { once: true });
         video.addEventListener('error', () => handleMediaError('Video'), { once: true });
 
-        // FIX: Only register audio listeners when not in streaming mode
         if (!isDashActive && !isHlsActive) {
             audio.addEventListener('canplaythrough', () => {
                 isAudioReady = true;
@@ -262,7 +311,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const checkStreamingSync = (label) => {
         if (label === 'DASH' || label === 'HLS') {
-            // Mark all buttons with this label as active
             const allBtns = document.querySelectorAll('.opt-btn');
             allBtns.forEach(btn => {
                 if (btn.textContent.trim() === label) {
@@ -274,8 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (parent.id === 'audio-options') audioQImg.src = btn.dataset.icon;
                 }
             });
-
-            console.log(`Modo ${label} activado.`);
 
             if (label === 'DASH') {
                 desactivarHls();
@@ -327,7 +373,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target.classList.contains('active-opt')) return;
 
             desactivarStreaming();
-
             const comingFromSync = wasInSyncMode();
             const newSrc = e.target.dataset.videoSrc;
             const newIcon = e.target.dataset.icon;
@@ -340,7 +385,6 @@ document.addEventListener('DOMContentLoaded', () => {
             video.src = newSrc;
 
             if (comingFromSync) setAudioQuality('MD');
-
             window.waitForMediaLoad(wasPlaying, currentTime);
         });
     });
@@ -365,7 +409,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target.classList.contains('active-opt')) return;
 
             desactivarStreaming();
-
             const comingFromSync = wasInSyncMode();
             const newSrc = e.target.dataset.audioSrc;
             const newIcon = e.target.dataset.icon;
@@ -378,7 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
             audio.src = newSrc;
 
             if (comingFromSync) setVideoQuality('720p');
-
             window.waitForMediaLoad(wasPlaying, currentTime);
         });
     });
@@ -406,7 +448,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     stopBtn.addEventListener('click', () => {
         desactivarStreaming();
-
         video.pause();
         audio.pause();
         playPauseImg.src = 'media/images/controls/play-icon.png';
@@ -420,13 +461,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         video.currentTime = 0;
         audio.currentTime = 0;
-
         progressBar.value = 0;
         progressBar.style.background = `rgba(255, 255, 255, 0.3)`;
 
         setAudioQuality('MD');
         setVideoQuality('720p');
-
         hideAllTracks();
         currentLang = 'en';
 
@@ -447,7 +486,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Error en reproducción:", error);
             }
         } else {
-            // FIX: video.pause() and audio.pause() are synchronous — no await needed
             video.pause();
             if (!isDashActive && !isHlsActive) {
                 audio.pause();
@@ -468,9 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isMuted = !isMuted;
         audio.muted = isMuted;
         if (isDashActive || isHlsActive) video.muted = isMuted;
-        if (!isMuted) {
-            volumeBar.value = audio.volume;
-        }
+        if (!isMuted) volumeBar.value = audio.volume;
         actualizarIconoVolumen();
     });
 
@@ -488,13 +524,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     progressBar.addEventListener('input', () => {
-        const tiempoDestino = (progressBar.value / 100) * video.duration;
-        video.currentTime = tiempoDestino;
+        video.currentTime = (progressBar.value / 100) * video.duration;
     });
 
-    video.addEventListener('ended', () => {
-        stopBtn.click();
-    });
+    video.addEventListener('ended', () => stopBtn.click());
 
     // ==========================================
     // --- 8. LÓGICA DE SUBTÍTULOS ---
@@ -539,21 +572,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     subtitlesBtn.addEventListener('click', () => {
-        if (isSubtitlesActive) {
-            hideAllTracks();
-        } else {
-            showTrack(currentLang);
-        }
+        if (isSubtitlesActive) hideAllTracks();
+        else showTrack(currentLang);
     });
 
     langOptions.forEach(btn => {
         btn.addEventListener('click', (event) => {
             const selectedLang = event.target.dataset.lang;
-            if (isSubtitlesActive && currentLang === selectedLang) {
-                hideAllTracks();
-            } else {
-                showTrack(selectedLang);
-            }
+            if (isSubtitlesActive && currentLang === selectedLang) hideAllTracks();
+            else showTrack(selectedLang);
         });
     });
 
@@ -571,11 +598,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isDashActive && !isHlsActive) audio.currentTime = video.currentTime;
             if (wasPlayingBeforeHidden) {
                 try {
-                    if (isDashActive || isHlsActive) {
-                        await video.play();
-                    } else {
-                        await Promise.all([video.play(), audio.play()]);
-                    }
+                    if (isDashActive || isHlsActive) await video.play();
+                    else await Promise.all([video.play(), audio.play()]);
                     playPauseImg.src = 'media/images/controls/pause-icon.png';
                 } catch (e) {
                     console.log("Reanudación bloqueada por el navegador");
@@ -591,35 +615,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (metadataTrack) {
         metadataTrack.mode = 'hidden';
-
         metadataTrack.addEventListener('cuechange', () => {
             const cue = metadataTrack.activeCues[0];
             if (!cue) return;
 
             try {
                 const data = JSON.parse(cue.text);
-
                 document.querySelector('.info-bajo-video h2').textContent = data.title;
                 document.querySelector('.info-bajo-video p').textContent = data.desc;
 
-                const imgMas = document.getElementById('meta-mas-jugado-img');
-                imgMas.src = data.p_mas.f;
+                document.getElementById('meta-mas-jugado-img').src = data.p_mas.f;
                 document.getElementById('meta-mas-jugado-p').textContent = data.p_mas.n;
 
-                const imgOri = document.getElementById('meta-origen-img');
-                imgOri.src = data.p_ori.f;
+                document.getElementById('meta-origen-img').src = data.p_ori.f;
                 document.getElementById('meta-origen-p').textContent = data.p_ori.n;
 
-                const imgTop1 = document.getElementById('meta-top1-img');
-                imgTop1.src = data.tops[0].p;
+                document.getElementById('meta-top1-img').src = data.tops[0].p;
                 document.getElementById('meta-top1-p').textContent = data.tops[0].n;
 
-                const imgTop2 = document.getElementById('meta-top2-img');
-                imgTop2.src = data.tops[1].p;
+                document.getElementById('meta-top2-img').src = data.tops[1].p;
                 document.getElementById('meta-top2-p').textContent = data.tops[1].n;
 
-                const imgTop3 = document.getElementById('meta-top3-img');
-                imgTop3.src = data.tops[2].p;
+                document.getElementById('meta-top3-img').src = data.tops[2].p;
                 document.getElementById('meta-top3-p').textContent = data.tops[2].n;
 
             } catch (e) { console.error("Error metadatos:", e); }
@@ -627,15 +644,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // --- 11. LÓGICA DE PREGUNTAS (QUIZ) ---
+    // --- 11. LÓGICA DE PREGUNTAS (QUIZ) VÍA WEBRTC ---
     // ==========================================
-    const quizOverlay = document.getElementById('quiz-overlay');
-    const quizQuestion = document.getElementById('quiz-question');
-    const quizOptionsContainer = document.getElementById('quiz-options');
-    const quizFeedback = document.getElementById('quiz-feedback');
-
-    // FIX: kind="preguntas" is not a valid HTML track kind — browsers silently ignore it.
-    // Changed to kind="metadata" with label="Quiz" in the HTML, and matched here.
     const quizTrackEl = Array.from(video.textTracks).find(
         t => t.kind === 'metadata' && t.label === 'Quiz'
     );
@@ -650,60 +660,21 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const quizData = JSON.parse(cue.text);
 
+                // Pausar y bloquear el Visualizador
                 video.pause();
                 if (!isDashActive && !isHlsActive) audio.pause();
                 playPauseImg.src = 'media/images/controls/play-icon.png';
-
                 controls.classList.add('controls-disabled');
 
-                quizQuestion.textContent = quizData.question;
-                quizOptionsContainer.innerHTML = '';
-                quizFeedback.textContent = '';
-
-                quizOverlay.style.display = 'flex';
-
-                quizData.options.forEach((opcion, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'quiz-option';
-                    btn.textContent = opcion;
-
-                    btn.addEventListener('click', () => {
-                        const todosBotones = quizOptionsContainer.querySelectorAll('.quiz-option');
-                        todosBotones.forEach(b => b.disabled = true);
-
-                        if (index === quizData.correctIndex) {
-                            btn.classList.add('correct');
-                            quizFeedback.textContent = '¡Correcto!';
-                            quizFeedback.style.color = '#28a745';
-                        } else {
-                            btn.classList.add('incorrect');
-                            quizFeedback.textContent = 'Respuesta incorrecta.';
-                            quizFeedback.style.color = '#dc3545';
-                            todosBotones[quizData.correctIndex].classList.add('correct');
-                        }
-
-                        setTimeout(async () => {
-                            quizOverlay.style.display = 'none';
-                            controls.classList.remove('controls-disabled');
-
-                            if (!isDashActive && !isHlsActive) audio.currentTime = video.currentTime;
-
-                            try {
-                                if (isDashActive || isHlsActive) {
-                                    await video.play();
-                                } else {
-                                    await Promise.all([video.play(), audio.play()]);
-                                }
-                                playPauseImg.src = 'media/images/controls/pause-icon.png';
-                            } catch (e) {
-                                console.log("Error al reanudar tras la pregunta:", e);
-                            }
-                        }, 2500);
-                    });
-
-                    quizOptionsContainer.appendChild(btn);
-                });
-
+                // Enviar al dispositivo Respondedor P2P
+                if (dataChannel && dataChannel.readyState === 'open') {
+                    dataChannel.send(JSON.stringify({
+                        type: 'SHOW_QUIZ',
+                        payload: quizData
+                    }));
+                } else {
+                    console.warn("No hay Respondedor conectado (DataChannel cerrado).");
+                }
             } catch (e) {
                 console.error("Error al parsear la pregunta del VTT:", e);
             }

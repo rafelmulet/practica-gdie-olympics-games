@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mando a Distancia - Quiz Interactivo</title>
+        
+        <link rel="stylesheet" href="css/main.css">
+        
+        <style>
+            body, html {
+                height: 100%;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-color: #f4f4f9;
+                font-family: Arial, sans-serif;
+            }
+
+            .mando-container {
+                width: 90%;
+                max-width: 500px;
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                text-align: center;
+            }
+
+            /* Reutilizamos y ajustamos las clases del quiz-overlay original */
+            #quiz-overlay {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .quiz-option {
+                padding: 15px;
+                font-size: 1.1rem;
+                border: 2px solid #0505A1;
+                background-color: white;
+                color: #0505A1;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .quiz-option:hover {
+                background-color: #0505A1;
+                color: white;
+            }
+
+            .quiz-option.correct {
+                background-color: #28a745;
+                color: white;
+                border-color: #28a745;
+            }
+
+            .quiz-option.incorrect {
+                background-color: #dc3545;
+                color: white;
+                border-color: #dc3545;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="mando-container">
+            <div id="esperando-msg">
+                <h2>Esperando sincronización...</h2>
+                <p>Conéctate a la misma red y espera a que aparezca una pregunta en el vídeo principal.</p>
+            </div>
+
+            <div id="quiz-overlay" style="display: none;">
+                <h3 id="quiz-question"></h3>
+                <div id="quiz-options"></div>
+                <p id="quiz-feedback" style="font-weight: bold; margin-top: 10px;"></p>
+            </div>
+        </div>
+
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="js/respondedor.js"></script>
+    </body>
+</html>
