@@ -9,28 +9,57 @@ document.addEventListener('DOMContentLoaded', () => {
     const room = 'sala-quiz';
     let peerConnection;
     let dataChannel;
+    let pendingQuiz = null; // Cola: guarda el quiz si el canal aún no está listo
 
     socket.emit('join', room);
 
     socket.on('ready', () => {
         console.log('Respondedor conectado. Iniciando conexión WebRTC...');
+        // Si había una PeerConnection anterior rota, limpiarla
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+            dataChannel = null;
+        }
         crearPeerConnection();
     });
 
     socket.on('message', async (message) => {
-        if (!peerConnection) crearPeerConnection();
+        if (!peerConnection) return; // El visualizador solo recibe 'answer' y 'candidate'
 
         if (message.type === 'answer') {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(message));
+            try {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(message));
+            } catch (e) {
+                console.error("Error setRemoteDescription (answer):", e);
+            }
         } else if (message.type === 'candidate') {
-            await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
+            try {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
+            } catch (e) {
+                console.error("Error addIceCandidate:", e);
+            }
         }
+    });
+
+    // Si el respondedor se desconecta, resetear para permitir reconexión
+    socket.on('peer-disconnected', () => {
+        console.log('Respondedor desconectado. Esperando nueva conexión...');
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+            dataChannel = null;
+        }
+        pendingQuiz = null;
     });
 
     function crearPeerConnection() {
         if (peerConnection) return;
         peerConnection = new RTCPeerConnection({
-            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
         });
 
         peerConnection.onicecandidate = (event) => {
@@ -39,9 +68,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        peerConnection.onconnectionstatechange = () => {
+            console.log('WebRTC estado:', peerConnection.connectionState);
+        };
+
         // Creamos el DataChannel en el cliente que inicia (Visualizador)
         dataChannel = peerConnection.createDataChannel('quizChannel');
-        dataChannel.onopen = () => console.log('DataChannel abierto en el Visualizador.');
+
+        dataChannel.onopen = () => {
+            console.log('DataChannel abierto en el Visualizador.');
+            // Si había un quiz pendiente mientras el canal no estaba listo, enviarlo ahora
+            if (pendingQuiz) {
+                console.log('Enviando quiz pendiente al respondedor...');
+                dataChannel.send(JSON.stringify({ type: 'SHOW_QUIZ', payload: pendingQuiz }));
+                pendingQuiz = null;
+            }
+        };
         
         dataChannel.onmessage = async (event) => {
             const msg = JSON.parse(event.data);
@@ -66,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         peerConnection.createOffer()
             .then(offer => peerConnection.setLocalDescription(offer))
             .then(() => socket.emit('message', { room, message: peerConnection.localDescription }))
-            .catch(e => console.error("Error WebRTC:", e));
+            .catch(e => console.error("Error WebRTC al crear offer:", e));
     }
 
     // ==========================================
@@ -673,7 +715,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         payload: quizData
                     }));
                 } else {
-                    console.warn("No hay Respondedor conectado (DataChannel cerrado).");
+                    // Guardar en cola: se enviará automáticamente cuando el canal abra
+                    console.warn("DataChannel no listo. Quiz guardado en cola para enviar al conectar.");
+                    pendingQuiz = quizData;
                 }
             } catch (e) {
                 console.error("Error al parsear la pregunta del VTT:", e);
