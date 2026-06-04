@@ -97,6 +97,7 @@ io.on("connection", (socket) => {
 // ── Arranque ─────────────────────────────────────────────────
 server.listen(PORT, () => {
     console.log(`\n✅  Servidor corriendo en https://gdie2603.ltim.uib.es`);
-    console.log(`    Visualizador: https://gdie2603.ltim.uib.es/visualizador.html`);
-    console.log(`    Respondedor:  https://gdie2603.ltim.uib.es/respondedor.html\n`);
+    console.log(`    P1: https://gdie2603.ltim.uib.es/p1.html`);
+    console.log(`    P3 (Visualizador): https://gdie2603.ltim.uib.es/p3_visualizador.html`);
+    console.log(`    P3 (Respondedor):  https://gdie2603.ltim.uib.es/p3_respondedor.html\n`);
 });
